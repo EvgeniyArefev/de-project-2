@@ -1,5 +1,5 @@
 create or replace view public.shipping_datamart as 
-	select 
+	select  
 		 si.shippingid 
 		,si.vendorid 
 		,st.transfer_type 
@@ -26,8 +26,13 @@ create or replace view public.shipping_datamart as
 	left join public.shipping_status ss 
 		on si.shippingid = ss.shippingid
 	left join public.shipping_country_rates scr 
-		on si.shipping_country_id = scr .shipping_country_id 
+		on si.shipping_country_id = scr.shipping_country_id 
 	left join public.shipping_agreement sa
 		on si.agreementid = sa.agreementid 
-	left join public.shipping s 
+	left join (
+			select distinct 
+				 shippingid
+				,shipping_plan_datetime
+			from public.shipping
+			) s 
 		on si.shippingid = s.shippingid;
