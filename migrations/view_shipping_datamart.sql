@@ -3,18 +3,19 @@ create or replace view public.shipping_datamart as
 		 si.shippingid 
 		,si.vendorid 
 		,st.transfer_type 
-		,date_part('day', age(ss.shipping_end_fact_datetime, ss.shipping_start_fact_datetime)) as full_day_at_shipping
+		,extract(day from (ss.shipping_end_fact_datetime - ss.shipping_start_fact_datetime)) as full_day_at_shipping
 		,case 
-			when ss.shipping_end_fact_datetime > s.shipping_plan_datetime 
-			then 1 else 0 
+			when ss.shipping_end_fact_datetime > si.shipping_plan_datetime then 1
+			when ss.shipping_end_fact_datetime is null then null
+			else 0 
 		 end as is_delay
 		,case 
 			when ss.status = 'finished' 
 			then 1 else 0 
 		 end as is_shipping_finish
 		,case 
-			when ss.shipping_end_fact_datetime > s.shipping_plan_datetime 
-			then date_part('day', age(ss.shipping_end_fact_datetime, s.shipping_plan_datetime))
+			when ss.shipping_end_fact_datetime > si.shipping_plan_datetime 
+			then extract(day from (ss.shipping_end_fact_datetime - ss.shipping_start_fact_datetime))
 			else 0
 		 end delay_day_at_shipping
 		,si.payment_amount 
@@ -28,11 +29,4 @@ create or replace view public.shipping_datamart as
 	left join public.shipping_country_rates scr 
 		on si.shipping_country_id = scr.shipping_country_id 
 	left join public.shipping_agreement sa
-		on si.agreementid = sa.agreementid 
-	left join (
-			select distinct 
-				 shippingid
-				,shipping_plan_datetime
-			from public.shipping
-			) s 
-		on si.shippingid = s.shippingid;
+		on si.agreementid = sa.agreementid;
